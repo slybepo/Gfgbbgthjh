@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PANORAMIX - Urban Exploration Game</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --primary-dark: #00a8b5;
+            --secondary: #ff4d4d;
+            --accent: #8338ec;
+            --text: #ffffff;
+            --text-light: #b8c2cc;
+            --bg: #0a0e17;
+            --bg-panel: rgba(10, 14, 23, 0.8);
+            --border: rgba(255, 255, 255, 0.1);
+            --glow: 0 0 10px rgba(0, 242, 255, 0.7);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            color: var(--text);
+            background-color: var(--bg);
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+        
+        /* Particle Background */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: linear-gradient(135deg, #0a0e17 0%, #1a2a4a 100%);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
+            width: 100%;
+        }
+        
+        /* Header with Cyberpunk Style */
+        header {
+            padding: 15px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(10, 14, 23, 0.8);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        
+        .logo img {
+            height: 50px;
+            margin-right: 15px;
+            filter: drop-shadow(var(--glow));
+        }
+        
+        .logo-text {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 28px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
+        }
+        
+        /* Navigation with Cyberpunk Style */
+        nav ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        nav li {
+            margin-left: 25px;
+            position: relative;
+        }
+        
+        nav a {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 500;
+            font-size: 16px;
+            color: var(--text-light);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            transition: all 0.3s;
+            padding: 5px 0;
+        }
+        
+        nav a:hover {
+            color: var(--primary);
+            text-shadow: var(--glow);
+        }
+        
+        nav a:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(90deg, var(--primary), transparent);
+            transition: width 0.3s;
+        }
+        
+        nav a:hover:after {
+            width: 100%;
+        }
+        
+        /* User Account with Cyberpunk Style */
+        .user-account {
+            position: relative;
+            margin-left: 40px;
+        }
+        
+        .user-btn {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 242, 255, 0.1);
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            cursor: pointer;
+            padding: 8px 15px;
+            border-radius: 30px;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+        }
+        
+        .user-btn:hover {
+            background: rgba(0, 242, 255, 0.2);
+            box-shadow: var(--glow);
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            border: 1px solid var(--primary);
+        }
+        
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+            font-family: 'Rajdhani', sans-serif;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 10px);
+            background: rgba(10, 14, 23, 0.9);
+            border-radius: 5px;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
+            padding: 10px 0;
+            min-width: 200px;
+            display: none;
+            z-index: 101;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+        
+        .dropdown-menu.show {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        .dropdown-menu a {
+            display: block;
+            padding: 10px 20px;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 500;
+        }
+        
+        .dropdown-menu a:hover {
+            color: var(--primary);
+            background: rgba(0, 242, 255, 0.1);
+            text-shadow: var(--glow);
+        }
+        
+        .dropdown-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 5px 0;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Holographic Welcome Text */
+        .holographic-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 72px;
+            font-weight: 900;
+            color: var(--primary);
+            text-shadow: 0 0 15px var(--primary), 0 0 30px rgba(0, 242, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            opacity: 0.8;
+            z-index: 1;
+            pointer-events: none;
+            animation: hologramPulse 3s infinite alternate;
+        }
+        
+        @keyframes hologramPulse {
+            0% { opacity: 0.7; text-shadow: 0 0 15px var(--primary), 0 0 30px rgba(0, 242, 255, 0.5); }
+            100% { opacity: 0.9; text-shadow: 0 0 25px var(--primary), 0 0 50px rgba(0, 242, 255, 0.8); }
+        }
+        
+        /* Hero Section with Game Style */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 100px 0;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, var(--bg-panel) 70%);
+            z-index: 0;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 72px;
+            font-weight: 900;
+            margin-bottom: 30px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            line-height: 1.1;
+            text-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+        }
+        
+        .hero p {
+            font-size: 20px;
+            line-height: 1.6;
+            margin-bottom: 40px;
+            color: var(--text-light);
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            padding: 15px 45px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            color: var(--text);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.5);
+        }
+        
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-dark), var(--accent));
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: -1;
+        }
+        
+        .cta-button:hover::before {
+            opacity: 1;
+        }
+        
+        /* Documentation Section */
+        .documentation {
+            padding: 100px 0;
+            background-color: var(--bg-panel);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+        
+        .documentation::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none" stroke="%2300f2ff" stroke-width="0.5" opacity="0.1"/></svg>');
+            opacity: 0.1;
+            z-index: 0;
+        }
+        
+        .documentation-content {
+            position: relative;
+            z-index: 1;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px;
+            background: rgba(10, 14, 23, 0.7);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+        
+        .documentation h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .documentation h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            margin: 30px 0 15px;
+            color: var(--primary);
+        }
+        
+        .documentation p {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: var(--text-light);
+        }
+        
+        .documentation ul {
+            margin-bottom: 30px;
+            padding-left: 20px;
+        }
+        
+        .documentation li {
+            margin-bottom: 10px;
+            color: var(--text-light);
+            position: relative;
+            list-style-type: none;
+            padding-left: 25px;
+        }
+        
+        .documentation li::before {
+            content: '▹';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+        }
+        
+        .dev-banner {
+            background: linear-gradient(90deg, var(--secondary), var(--accent));
+            color: var(--text);
+            padding: 15px;
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 40px;
+            border-radius: 5px;
+            box-shadow: 0 0 20px rgba(255, 77, 77, 0.3);
+            animation: pulse 2s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.8; box-shadow: 0 0 20px rgba(255, 77, 77, 0.3); }
+            100% { opacity: 1; box-shadow: 0 0 30px rgba(255, 77, 77, 0.5); }
+        }
+        
+        /* Footer with Cyberpunk Style */
+        footer {
+            background-color: var(--bg);
+            padding: 60px 0 30px;
+            position: relative;
+            border-top: 1px solid var(--border);
+        }
+        
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none" stroke="%2300f2ff" stroke-width="0.5" opacity="0.05"/></svg>');
+            opacity: 0.2;
+            z-index: 0;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 50px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .footer-column h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .footer-column ul {
+            list-style: none;
+        }
+        
+        .footer-column li {
+            margin-bottom: 12px;
+        }
+        
+        .footer-column a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 500;
+        }
+        
+        .footer-column a:hover {
+            color: var(--primary);
+            text-shadow: var(--glow);
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .social-links a {
+            color: var(--text-light);
+            font-size: 20px;
+            transition: all 0.3s;
+        }
+        
+        .social-links a:hover {
+            color: var(--primary);
+            transform: translateY(-3px);
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid var(--border);
+            color: var(--text-light);
+            font-size: 14px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 1024px) {
+            .hero h1 {
+                font-size: 60px;
+            }
+            
+            .holographic-text {
+                font-size: 60px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                padding: 20px 0;
+            }
+            
+            .logo {
+                margin-bottom: 20px;
+            }
+            
+            nav ul {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            nav li {
+                margin: 0 15px 10px;
+            }
+            
+            .user-account {
+                margin: 20px 0 0;
+            }
+            
+            .hero h1 {
+                font-size: 48px;
+            }
+            
+            .hero p {
+                font-size: 18px;
+            }
+            
+            .holographic-text {
+                font-size: 48px;
+                top: 40%;
+            }
+            
+            .documentation-content {
+                padding: 30px 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 36px;
+                letter-spacing: 3px;
+            }
+            
+            .holographic-text {
+                font-size: 36px;
+                letter-spacing: 3px;
+            }
+            
+            .cta-button {
+                padding: 12px 30px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Particle.js Background -->
+    <div id="particles-js"></div>
+    
+    <!-- Holographic Welcome Text -->
+    <div class="holographic-text" id="welcomeText">Welcome</div>
+    
+    <div class="container">
+        <header>
+            <a href="#" class="logo">
+                <!-- Replace with your actual logo -->
+                <img src="https://via.placeholder.com/50x50" alt="Panoramix Logo">
+                <div class="logo-text">Panoramix</div>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">Explore</a></li>
+                    <li><a href="#">Locations</a></li>
+                    <li><a href="#">Media</a></li>
+                    <li><a href="#">Community</a></li>
+                </ul>
+            </nav>
+            <div class="user-account" id="userAccount">
+                <!-- Will be populated by Firebase auth -->
+            </div>
+        </header>
+    </div>
+    
+    <div class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Urban Exploration Evolved</h1>
+                <p>Step into the world of Panoramix, where forgotten places come alive with mystery and adventure. Document, explore, and uncover the secrets hidden in the decaying corners of civilization.</p>
+                <a href="#" class="cta-button" id="authButton">Begin Exploration</a>
+            </div>
+        </div>
+    </div>
+    
+    <section class="documentation">
+        <div class="container">
+            <div class="documentation-content">
+                <div class="dev-banner">
+                    Game Under Development - Coming 2026
+                </div>
+                
+                <h2>Game Documentation</h2>
+                
+                <h3>About Panoramix</h3>
+                <p>Panoramix is an immersive urban exploration video game that blends realistic environments with fictional narratives. Players take on the role of an urban explorer documenting abandoned locations while uncovering hidden stories and solving environmental puzzles.</p>
+                
+                <h3>Location System</h3>
+                <p>The game features a hybrid approach to locations:</p>
+                <ul>
+                    <li><strong>Real-world inspired</strong>: Many locations are based on actual abandoned places from around the world, with architectural details and decay patterns carefully researched.</li>
+                    <li><strong>Artistic interpretation</strong>: While inspired by reality, locations are not 1:1 replicas but rather artistic interpretations that serve gameplay.</li>
+                    <li><strong>Fictional elements</strong>: Some locations are completely fictional, designed to expand the game's lore and provide unique gameplay experiences.</li>
+                    <li><strong>Procedural elements</strong>: Certain location aspects are procedurally generated to ensure replayability.</li>
+                </ul>
+                
+                <h3>Development Status</h3>
+                <p>Panoramix is currently in active development with planned features including:</p>
+                <ul>
+                    <li>Advanced photography system with realistic camera mechanics</li>
+                    <li>Dynamic weather and time-of-day system affecting exploration</li>
+                    <li>Environmental storytelling through found objects and documents</li>
+                    <li>Multiplayer exploration modes</li>
+                    <li>Location editor for community content creation</li>
+                </ul>
+                <p>The development team is targeting a 2026 release across multiple platforms.</p>
+                
+                <h3>Disclaimer</h3>
+                <p>All locations in Panoramix, even those inspired by real places, are fictionalized for gameplay purposes. The game does not encourage or endorse trespassing or unsafe urban exploration practices in real life.</p>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Game</h3>
+                    <ul>
+                        <li><a href="#">Features</a></li>
+                        <li><a href="#">Locations</a></li>
+                        <li><a href="#">Equipment</a></li>
+                        <li><a href="#">Roadmap</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Community</h3>
+                    <ul>
+                        <li><a href="#">Forums</a></li>
+                        <li><a href="#">Guides</a></li>
+                        <li><a href="#">Events</a></li>
+                        <li><a href="#">Contribute</a></li>
+                    </ul>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-discord"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Tutorials</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Feedback</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Legal</h3>
+                    <ul>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                &copy; 2023-2026 Panoramix. All rights reserved. All trademarks are property of their respective owners.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Font Awesome for icons -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    
+    <!-- Particles.js Script -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    
+    <!-- Firebase and Auth Script -->
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBMUi291fwb-HSxlGPQMxdEJGUTiOOvFBs",
+            authDomain: "nexaverse-eeb07.firebaseapp.com",
+            projectId: "nexaverse-eeb07",
+            storageBucket: "nexaverse-eeb07.appspot.com",
+            messagingSenderId: "686342300627",
+            appId: "1:686342300627:web:90522d8f1129fb00b08526",
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // DOM elements
+        const userAccount = document.getElementById('userAccount');
+        const authButton = document.getElementById('authButton');
+        const welcomeText = document.getElementById('welcomeText');
+
+        // Auth state listener
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in
+                const displayName = user.displayName || user.email.split('@')[0];
+                const firstLetter = displayName.charAt(0).toUpperCase();
+                
+                // Update welcome text
+                welcomeText.textContent = `Welcome, ${displayName}`;
+                
+                // Update user account dropdown
+                userAccount.innerHTML = `
+                    <button class="user-btn" id="userDropdownBtn">
+                        <div class="user-avatar">${firstLetter}</div>
+                        <span class="user-name">${displayName}</span>
+                    </button>
+                    <div class="dropdown-menu" id="userDropdown">
+                        <a href="#"><i class="fas fa-user"></i> Profile</a>
+                        <a href="#"><i class="fas fa-cog"></i> Settings</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" id="signOutBtn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+                    </div>
+                `;
+                
+                authButton.textContent = 'Continue to Game';
+                authButton.href = '#';
+                
+                // Add dropdown toggle
+                const dropdownBtn = document.getElementById('userDropdownBtn');
+                const dropdown = document.getElementById('userDropdown');
+                
+                dropdownBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('show');
+                });
+                
+                // Sign out button
+                document.getElementById('signOutBtn').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    auth.signOut();
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', () => {
+                    dropdown.classList.remove('show');
+                });
+            } else {
+                // No user is signed in
+                welcomeText.textContent = 'Welcome';
+                userAccount.innerHTML = '';
+                authButton.textContent = 'Sign In / Register';
+                authButton.onclick = () => {
+                    // Implement your sign-in method here
+                    // For example, redirect to sign-in page or show modal
+                    window.location.href = '/signin';
+                };
+            }
+        });
+
+        // Initialize particles.js
+        document.addEventListener('DOMContentLoaded', function() {
+            particlesJS('particles-js', {
+                "particles": {
+                    "number": {
+                        "value": 100,
+                        "density": {
+                            "enable": true,
+                            "value_area": 800
+                        }
+                    },
+                    "color": {
+                        "value": "#00f2ff"
+                    },
+                    "shape": {
+                        "type": "circle",
+                        "stroke": {
+                            "width": 0,
+                            "color": "#000000"
+                        }
+                    },
+                    "opacity": {
+                        "value": 0.5,
+                        "random": true,
+                        "anim": {
+                            "enable": true,
+                            "speed": 1,
+                            "opacity_min": 0.1,
+                            "sync": false
+                        }
+                    },
+                    "size": {
+                        "value": 3,
+                        "random": true,
+                        "anim": {
+                            "enable": true,
+                            "speed": 2,
+                            "size_min": 0.1,
+                            "sync": false
+                        }
+                    },
+                    "line_linked": {
+                        "enable": true,
+                        "distance": 150,
+                        "color": "#00f2ff",
+                        "opacity": 0.2,
+                        "width": 1
+                    },
+                    "move": {
+                        "enable": true,
+                        "speed": 1.5,
+                        "direction": "none",
+                        "random": true,
+                        "straight": false,
+                        "out_mode": "out",
+                        "bounce": false,
+                        "attract": {
+                            "enable": true,
+                            "rotateX": 600,
+                            "rotateY": 1200
+                        }
+                    }
+                },
+                "interactivity": {
+                    "detect_on": "canvas",
+                    "events": {
+                        "onhover": {
+                            "enable": true,
+                            "mode": "grab"
+                        },
+                        "onclick": {
+                            "enable": true,
+                            "mode": "push"
+                        },
+                        "resize": true
+                    },
+                    "modes": {
+                        "grab": {
+                            "distance": 140,
+                            "line_linked": {
+                                "opacity": 0.5
+                            }
+                        },
+                        "push": {
+                            "particles_nb": 4
+                        }
+                    }
+                },
+                "retina_detect": true
+            });
+        });
+    </script>
+</body>
+</html>
